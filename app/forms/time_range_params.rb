@@ -3,10 +3,8 @@ class TimeRangeParams
   include ActiveModel::Attributes
   include ActiveModel::Validations::Callbacks
 
-  # Contract:
-  # - from/to are datetimes
-  # - from is clamped to "now" (past is not returned for available slots, as they're not available anymore)
-  # - to must be in the future and greater than from
+  # from is at least "now" (past is not returned for available slots, as they're not available anymore)
+  # to must be strictly after from
   attribute :from, :datetime
   attribute :to, :datetime
 
@@ -14,7 +12,6 @@ class TimeRangeParams
 
   validates :from, :to, presence: true
   validates :to, comparison: { greater_than: :from }
-  validate :to_must_be_in_future
 
   private
 
@@ -22,11 +19,5 @@ class TimeRangeParams
     return unless from.present?
 
     self.from = [ from, Time.zone.now ].max
-  end
-
-  def to_must_be_in_future
-    return unless to.present?
-
-    errors.add(:to, :greater_than, value: :now) unless to > Time.zone.now
   end
 end
