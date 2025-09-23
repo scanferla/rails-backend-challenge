@@ -29,7 +29,7 @@ class AvailabilityTest < ActiveSupport::TestCase
     )
 
     assert_not dup.valid?
-    assert_includes dup.errors[:external_id], "has already been taken"
+    assert dup.errors.of_kind?(:external_id, :taken)
   end
 
   test "same-day end_time must be after start_time" do
@@ -44,7 +44,7 @@ class AvailabilityTest < ActiveSupport::TestCase
     )
 
     assert_not availability.valid?
-    assert_includes availability.errors[:end_time], "must be after start_time for same-day windows"
+    assert availability.errors.of_kind?(:end_time, :greater_than)
   end
 
   test "presence validations" do
@@ -55,7 +55,7 @@ class AvailabilityTest < ActiveSupport::TestCase
       availability.send("#{attr}=", nil)
 
       assert_not availability.valid?, "expected #{attr} presence validation to fail"
-      assert_includes availability.errors[attr], "can't be blank"
+      assert availability.errors.of_kind?(attr, :blank)
     end
   end
 
@@ -75,6 +75,6 @@ class AvailabilityTest < ActiveSupport::TestCase
     availability = build(:availability, start_day_of_week: :funday)
 
     assert_not availability.valid?
-    assert availability.errors[:start_day_of_week].present?
+    assert availability.errors.of_kind?(:start_day_of_week, :inclusion)
   end
 end

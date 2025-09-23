@@ -17,14 +17,14 @@ class AppointmentTest < ActiveSupport::TestCase
     )
 
     assert_not appointment.valid?
-    assert_includes appointment.errors[:ends_at], "must be after starts_at"
+    assert appointment.errors.of_kind?(:ends_at, :greater_than)
   end
 
   test "status invalid is a validation error (enum validate: true)" do
     appointment = build(:appointment, status: "invalid_status")
 
     assert_not appointment.valid?
-    assert_includes appointment.errors[:status], "is not included in the list"
+    assert appointment.errors.of_kind?(:status, :inclusion)
   end
 
   test "status enum prefixed helpers work" do
@@ -45,20 +45,20 @@ class AppointmentTest < ActiveSupport::TestCase
     appointment = build(:appointment, starts_at: nil)
 
     assert_not appointment.valid?
-    assert_includes appointment.errors[:starts_at], "can't be blank"
+    assert appointment.errors.of_kind?(:starts_at, :blank)
   end
 
   test "presence validation for ends_at" do
     appointment = build(:appointment, ends_at: nil)
 
     assert_not appointment.valid?
-    assert_includes appointment.errors[:ends_at], "can't be blank"
+    assert appointment.errors.of_kind?(:ends_at, :blank)
   end
 
   test "presence validation for status" do
     appointment = build(:appointment, status: nil)
 
     assert_not appointment.valid?
-    assert_includes appointment.errors[:status], "can't be blank"
+    assert appointment.errors.of_kind?(:status, :blank)
   end
 end
