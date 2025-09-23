@@ -77,4 +77,30 @@ class AvailabilityTest < ActiveSupport::TestCase
     assert_not availability.valid?
     assert availability.errors.of_kind?(:start_day_of_week, :inclusion)
   end
+
+  # Helpers: start_dow / end_dow / days_until_end
+  test "start_dow and end_dow return integer weekdays" do
+    availability = build(:availability, start_day_of_week: :monday, end_day_of_week: :tuesday)
+
+    assert_equal 1, availability.start_dow
+    assert_equal 2, availability.end_dow
+  end
+
+  test "days_until_end is 0 for same-day windows" do
+    availability = build(:availability, start_day_of_week: :monday, end_day_of_week: :monday)
+
+    assert_equal 0, availability.days_until_end
+  end
+
+  test "days_until_end is 1 for overnight Monday to Tuesday" do
+    availability = build(:availability, start_day_of_week: :monday, end_day_of_week: :tuesday)
+
+    assert_equal 1, availability.days_until_end
+  end
+
+  test "days_until_end wraps across week (Monday to Sunday -> 6)" do
+    availability = build(:availability, start_day_of_week: :monday, end_day_of_week: :sunday)
+
+    assert_equal 6, availability.days_until_end
+  end
 end

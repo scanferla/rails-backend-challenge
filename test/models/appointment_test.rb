@@ -27,18 +27,18 @@ class AppointmentTest < ActiveSupport::TestCase
     assert appointment.errors.of_kind?(:status, :inclusion)
   end
 
-  test "status enum prefixed helpers work" do
+  test "status enum helpers work" do
     appointment = build(
       :appointment,
       starts_at: "2025-09-22 10:00",
       ends_at: "2025-09-22 10:30"
     )
 
-    assert appointment.status_scheduled?
+    assert appointment.scheduled?
 
-    appointment.status_canceled!
+    appointment.canceled!
 
-    assert appointment.status_canceled?
+    assert appointment.canceled?
   end
 
   test "presence validation for starts_at" do
@@ -60,5 +60,20 @@ class AppointmentTest < ActiveSupport::TestCase
 
     assert_not appointment.valid?
     assert appointment.errors.of_kind?(:status, :blank)
+  end
+
+  test "overlapping scope returns appointments that intersect window" do
+    provider = create(:provider)
+    create(:client)
+
+    inside = create(:appointment, provider:, starts_at: "2025-09-22 10:00", ends_at: "2025-09-22 11:00")
+    touching_end = create(:appointment, provider:, starts_at: "2025-09-22 12:00", ends_at: "2025-09-22 13:00")
+    touching_start = create(:appointment, provider:, starts_at: "2025-09-22 08:00", ends_at: "2025-09-22 09:00")
+
+    results = Appointment.where(provider:).overlapping(Time.zone.parse("2025-09-22 09:00"), Time.zone.parse("2025-09-22 12:00"))
+
+    assert_includes results, inside
+    refute_includes results, touching_end
+    refute_includes results, touching_start
   end
 end

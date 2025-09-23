@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_22_160607) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_043213) do
   create_table "appointments", force: :cascade do |t|
     t.integer "client_id", null: false
     t.integer "provider_id", null: false
@@ -20,6 +20,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_160607) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["client_id"], name: "index_appointments_on_client_id"
+    t.index ["provider_id", "ends_at"], name: "index_appointments_on_provider_and_ends_at"
+    t.index ["provider_id", "starts_at"], name: "index_appointments_on_provider_and_starts_at"
     t.index ["provider_id"], name: "index_appointments_on_provider_id"
     t.check_constraint "ends_at > starts_at", name: "check_appointments_ends_after_starts"
   end
@@ -34,7 +36,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_160607) do
     t.time "end_time", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["provider_id", "end_day_of_week"], name: "index_availabilities_on_provider_and_end_dow"
     t.index ["provider_id", "source", "external_id"], name: "index_availabilities_on_provider_source_external_id", unique: true
+    t.index ["provider_id", "start_day_of_week"], name: "index_availabilities_on_provider_and_start_dow"
     t.index ["provider_id"], name: "index_availabilities_on_provider_id"
     t.check_constraint "end_day_of_week BETWEEN 0 AND 6", name: "check_availabilities_end_day_of_week_range"
     t.check_constraint "start_day_of_week BETWEEN 0 AND 6", name: "check_availabilities_start_day_of_week_range"

@@ -27,4 +27,16 @@ class Availability < ApplicationRecord
   validates :end_time,
             comparison: { greater_than: :start_time, message: "must be after start_time for same-day windows" },
             if: -> { start_day_of_week == end_day_of_week }
+
+  def start_dow
+    self.class.start_day_of_weeks[start_day_of_week]
+  end
+
+  def end_dow
+    self.class.end_day_of_weeks[end_day_of_week]
+  end
+
+  def days_until_end
+    (end_dow - start_dow) % 7
+  end
 end
