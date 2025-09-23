@@ -2,10 +2,12 @@ require "test_helper"
 
 class ProviderTest < ActiveSupport::TestCase
   test "has many appointments" do
-    provider = create(:provider)
+    provider = create(:provider, id: 1)
+    AvailabilitySync.call(provider_id: provider.id)
 
-    create(:appointment, provider:)
-    create(:appointment, provider:)
+    next_monday = Time.zone.now.next_week(:monday)
+    create(:appointment, provider:, client: create(:client), starts_at: next_monday.change(hour: 9, min: 5), ends_at: next_monday.change(hour: 9, min: 25))
+    create(:appointment, provider:, client: create(:client), starts_at: next_monday.change(hour: 11, min: 30), ends_at: next_monday.change(hour: 11, min: 45))
 
     assert_equal 2, provider.appointments.count
   end

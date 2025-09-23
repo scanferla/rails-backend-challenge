@@ -1,8 +1,19 @@
 require "test_helper"
 
 class AppointmentTest < ActiveSupport::TestCase
+  setup do
+    @next_monday = Time.zone.now.next_week(:monday)
+  end
   test "belongs to client and provider" do
-    appointment = create(:appointment)
+    provider = create(:provider, id: 1)
+    AvailabilitySync.call(provider_id: provider.id)
+    client = create(:client)
+
+    appointment = create(:appointment,
+                         provider:,
+                         client:,
+                         starts_at: @next_monday.change(hour: 9, min: 5),
+                         ends_at: @next_monday.change(hour: 9, min: 25))
 
     assert appointment.client
     assert appointment.provider
@@ -30,13 +41,16 @@ class AppointmentTest < ActiveSupport::TestCase
   test "status enum helpers work" do
     appointment = build(
       :appointment,
+      client: create(:client),
+      provider: create(:provider),
       starts_at: "2025-09-22 10:00",
-      ends_at: "2025-09-22 10:30"
+      ends_at: "2025-09-22 10:30",
+      status: :scheduled
     )
 
     assert appointment.scheduled?
 
-    appointment.canceled!
+    appointment.status = :canceled
 
     assert appointment.canceled?
   end
@@ -63,17 +77,61 @@ class AppointmentTest < ActiveSupport::TestCase
   end
 
   test "overlapping scope returns appointments that intersect window" do
-    provider = create(:provider)
-    create(:client)
+    provider = create(:provider, id: 3)
+    AvailabilitySync.call(provider_id: provider.id)
+    client = create(:client)
 
-    inside = create(:appointment, provider:, starts_at: "2025-09-22 10:00", ends_at: "2025-09-22 11:00")
-    touching_end = create(:appointment, provider:, starts_at: "2025-09-22 12:00", ends_at: "2025-09-22 13:00")
-    touching_start = create(:appointment, provider:, starts_at: "2025-09-22 08:00", ends_at: "2025-09-22 09:00")
+    # Provider 3 has Thursday 10:00-11:00 and 11:00-11:30
+    thursday = Time.zone.now.next_occurring(:thursday)
+    inside = create(:appointment, provider:, client:,
+                    starts_at: thursday.change(hour: 10, min: 15),
+                    ends_at: thursday.change(hour: 10, min: 45))
+    touching_end = create(:appointment, provider:, client:,
+                          starts_at: thursday.change(hour: 11, min: 0),
+                          ends_at: thursday.change(hour: 11, min: 15))
 
-    results = Appointment.where(provider:).overlapping(Time.zone.parse("2025-09-22 09:00"), Time.zone.parse("2025-09-22 12:00"))
+    results = Appointment.where(provider:).overlapping(thursday.change(hour: 10, min: 0), thursday.change(hour: 11, min: 0))
 
     assert_includes results, inside
     refute_includes results, touching_end
-    refute_includes results, touching_start
+  end
+
+  test "fits_in_free_slot validation passes when inside free slot" do
+    provider = create(:provider, id: 1)
+    client = create(:client)
+    AvailabilitySync.call(provider_id: provider.id)
+
+    appointment = build(
+      :appointment,
+      client:,
+      provider:,
+      starts_at: @next_monday.change(hour: 9, min: 5),
+      ends_at: @next_monday.change(hour: 9, min: 25)
+    )
+
+    assert appointment.valid?
+    assert appointment.save
+
+    # Changing the time window should re-run validation and fail if outside
+    appointment.starts_at = @next_monday.change(hour: 7, min: 0)
+    appointment.ends_at = @next_monday.change(hour: 7, min: 30)
+    assert_not appointment.valid?
+  end
+
+  test "fits_in_free_slot validation fails when outside free slot" do
+    provider = create(:provider, id: 1)
+    client = create(:client)
+    AvailabilitySync.call(provider_id: provider.id)
+
+    appointment = build(
+      :appointment,
+      client:,
+      provider:,
+      starts_at: @next_monday.change(hour: 7, min: 0),
+      ends_at: @next_monday.change(hour: 7, min: 30)
+    )
+
+    assert_not appointment.valid?
+    assert appointment.errors.full_messages.any? { |m| m.include?("no availability") }
   end
 end

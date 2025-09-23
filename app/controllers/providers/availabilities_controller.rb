@@ -8,8 +8,8 @@ module Providers
     def index
       result = Providers::Availabilities::FreeSlots.call(
         provider: @provider,
-        from: @availability_params.from,
-        to: @availability_params.to
+        from: availability_params.from,
+        to: availability_params.to
       )
 
       if result.success?
@@ -27,10 +27,13 @@ module Providers
     end
 
     def validate_availability_request
-      @availability_params = TimeRangeParams.new(params.permit(:from, :to))
-      return if @availability_params.valid?
+      return if availability_params.valid?
 
-      render_bad_request(@availability_params.errors.full_messages)
+      render_bad_request(availability_params.errors.full_messages)
+    end
+
+    def availability_params
+      @availability_params ||= TimeRangeParams.new(params.permit(:from, :to))
     end
   end
 end
