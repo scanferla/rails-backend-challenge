@@ -2,22 +2,40 @@ require "test_helper"
 
 class TimeRangeParamsTest < ActiveSupport::TestCase
   test "valid with proper ISO8601 from/to and to after from" do
-    r = TimeRangeParams.new(from: "2025-10-06T09:00:00Z", to: "2025-10-06T10:00:00Z")
-    assert r.valid?
-    assert_instance_of Time, r.from
-    assert_instance_of Time, r.to
+    params = TimeRangeParams.new(from: "2025-10-06T09:00:00Z", to: "2025-10-06T10:00:00Z")
+    assert params.valid?
+    assert_instance_of Time, params.from
+    assert_instance_of Time, params.to
   end
 
   test "invalid when missing from or to" do
-    r = TimeRangeParams.new(from: nil, to: nil)
-    assert_not r.valid?
-    assert r.errors.of_kind?(:from, :blank)
-    assert r.errors.of_kind?(:to, :blank)
+    params_missing = TimeRangeParams.new(from: nil, to: nil)
+    assert_not params_missing.valid?
+    assert params_missing.errors.of_kind?(:from, :blank)
+    assert params_missing.errors.of_kind?(:to, :blank)
   end
 
   test "invalid when to is not after from" do
-    r = TimeRangeParams.new(from: "2025-10-06T10:00:00Z", to: "2025-10-06T10:00:00Z")
-    assert_not r.valid?
-    assert r.errors.of_kind?(:to, :greater_than)
+    params_equal = TimeRangeParams.new(from: "2025-10-06T10:00:00Z", to: "2025-10-06T10:00:00Z")
+    assert_not params_equal.valid?
+    assert params_equal.errors.of_kind?(:to, :greater_than)
+  end
+
+  test "clamps from to now when from is in the past" do
+    past_from = 1.day.ago.iso8601
+    future_to = 1.hour.from_now.iso8601
+    params_clamped = TimeRangeParams.new(from: past_from, to: future_to)
+    assert params_clamped.valid?
+    assert params_clamped.from >= Time.zone.now - 1.second # allow tiny drift
+  end
+
+  test "to must be in the future (strictly)" do
+    params_with_to_now = TimeRangeParams.new(from: 1.minute.from_now.iso8601, to: Time.zone.now.iso8601)
+    assert_not params_with_to_now.valid?
+    assert params_with_to_now.errors.of_kind?(:to, :greater_than)
+
+    params_with_to_before_from = TimeRangeParams.new(from: 1.minute.from_now.iso8601, to: 1.second.from_now.iso8601)
+    assert_not params_with_to_before_from.valid?
+    assert params_with_to_before_from.errors.of_kind?(:to, :greater_than)
   end
 end
