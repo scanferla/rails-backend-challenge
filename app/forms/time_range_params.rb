@@ -11,7 +11,7 @@ class TimeRangeParams
   before_validation :clamp_from_to_now
 
   validates :from, :to, presence: true
-  validates :to, comparison: { greater_than: :from }
+  validates :to, comparison: { greater_than: :from }, if: -> { from.present? && to.present? }
 
   private
 

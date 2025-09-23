@@ -29,13 +29,23 @@ class TimeRangeParamsTest < ActiveSupport::TestCase
     assert params_clamped.from >= Time.zone.now - 1.second # allow tiny drift
   end
 
-  test "to must be in the future (strictly)" do
-    params_with_to_now = TimeRangeParams.new(from: 1.minute.from_now.iso8601, to: Time.zone.now.iso8601)
-    assert_not params_with_to_now.valid?
-    assert params_with_to_now.errors.of_kind?(:to, :greater_than)
-
+  test "to must be in the future (implicit via to > clamped from)" do
     params_with_to_before_from = TimeRangeParams.new(from: 1.minute.from_now.iso8601, to: 1.second.from_now.iso8601)
     assert_not params_with_to_before_from.valid?
     assert params_with_to_before_from.errors.of_kind?(:to, :greater_than)
+  end
+
+  test "when only from is missing shows presence error only" do
+    params_only_to = TimeRangeParams.new(from: nil, to: 1.hour.from_now.iso8601)
+    assert_not params_only_to.valid?
+    assert params_only_to.errors.of_kind?(:from, :blank)
+    refute params_only_to.errors.of_kind?(:to, :greater_than)
+  end
+
+  test "when only to is missing shows presence error only" do
+    params_only_from = TimeRangeParams.new(from: 1.hour.from_now.iso8601, to: nil)
+    assert_not params_only_from.valid?
+    assert params_only_from.errors.of_kind?(:to, :blank)
+    refute params_only_from.errors.of_kind?(:to, :greater_than)
   end
 end
