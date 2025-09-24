@@ -1,3 +1,5 @@
+# In production/live code, this service could be called from a webhook controller
+
 class AvailabilitySync < ApplicationService
   def initialize(client: CalendlyClient.new, provider_id:)
     @client = client
