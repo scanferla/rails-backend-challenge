@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "client_id", "provider_id", "status", "starts_at", "ends_at"],
+  "properties": {
+    "id": { "type": "integer" },
+    "client_id": { "type": "integer" },
+    "provider_id": { "type": "integer" },
+    "status": { "type": "string" },
+    "starts_at": { "type": "string" },
+    "ends_at": { "type": "string" }
+  }
+}
+

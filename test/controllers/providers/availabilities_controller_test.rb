@@ -15,6 +15,7 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     body = JSON.parse(@response.body)
+    assert_schema "providers_availabilities_index.json", body
     assert_equal @provider.id, body["provider_id"]
     assert_equal from_time.iso8601, body["from"]
     assert_equal to_time.iso8601, body["to"]

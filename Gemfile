@@ -47,4 +47,7 @@ group :development, :test do
 
   # Factories for tests
   gem "factory_bot_rails"
+
+  # JSON Schema validation for API responses in tests
+  gem "json_schemer"
 end

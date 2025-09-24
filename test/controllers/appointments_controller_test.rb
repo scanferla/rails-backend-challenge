@@ -16,6 +16,7 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
 
     body = JSON.parse(@response.body)
+    assert_schema "appointments_show.json", body
     assert_equal @client.id, body["client_id"]
     assert_equal @provider.id, body["provider_id"]
     assert_equal starts_at.iso8601, body["starts_at"]
