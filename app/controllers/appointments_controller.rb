@@ -12,9 +12,13 @@ class AppointmentsController < ApplicationController
   end
 
   # DELETE /appointments/:id
-  # Bonus: cancel an appointment instead of deleting
+  # Cancel an appointment instead of deleting
   def destroy
-    raise NotImplementedError, "Implement appointment cancelation endpoint"
+    @appointment = Appointment.find(params[:id])
+
+    @appointment.canceled!
+
+    render :show, status: :ok
   end
 
   private

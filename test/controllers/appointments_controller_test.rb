@@ -52,4 +52,25 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(@response.body)
     assert body["error"].present?
   end
+
+  test "DELETE /appointments/:id soft-cancels and returns updated resource" do
+    monday = Time.zone.now.next_week(:monday)
+    appt = create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 9, min: 0), ends_at: monday.change(hour: 9, min: 30))
+
+    delete appointment_path(appt)
+    assert_response :ok
+
+    body = JSON.parse(@response.body)
+    assert_schema "appointments_show.json", body
+    assert_equal "canceled", body["status"]
+    assert_equal appt.id, body["id"]
+  end
+
+  test "DELETE /appointments/:id returns 404 when not found" do
+    delete appointment_path(999_999)
+    assert_response :not_found
+
+    body = JSON.parse(@response.body)
+    assert body["error"].present?
+  end
 end
