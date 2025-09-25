@@ -1,4 +1,5 @@
-# In production/live code, this service could be called from a webhook controller
+# In production/live code, trigger this via a webhook → background job.
+# Optionally prune: delete provider Calendly availabilities whose external_ids are absent in the payload.
 
 class AvailabilitySync < ApplicationService
   def initialize(client: CalendlyClient.new, provider_id:)
