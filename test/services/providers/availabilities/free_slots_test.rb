@@ -9,8 +9,8 @@ class Providers::Availabilities::FreeSlotsTest < ActiveSupport::TestCase
   end
 
   test "clamps a single window to the requested range" do
-    from = "2025-09-22 09:05" # Monday
-    to = "2025-09-22 09:25"
+    from = @next_monday.change(hour: 9, min: 5)
+    to = @next_monday.change(hour: 9, min: 25)
 
     result = Providers::Availabilities::FreeSlots.call(provider: @provider, from:, to:)
     assert result.success?
@@ -101,8 +101,9 @@ class Providers::Availabilities::FreeSlotsTest < ActiveSupport::TestCase
     provider = create(:provider, id: 3)
     AvailabilitySync.call(provider_id: provider.id)
 
-    from = "2025-09-25 10:00" # Thursday
-    to = "2025-09-25 11:30"
+    thursday = Time.zone.now.next_week(:thursday)
+    from = thursday.change(hour: 10, min: 0)
+    to = thursday.change(hour: 11, min: 30)
 
     result = Providers::Availabilities::FreeSlots.call(provider:, from:, to:)
     assert result.success?
@@ -110,7 +111,7 @@ class Providers::Availabilities::FreeSlotsTest < ActiveSupport::TestCase
     slots = result.data[:free_slots]
     assert_includes slots, { starts_at: from, ends_at: to }
     # Should not return the two separate touching windows
-    refute_includes slots, { starts_at: "2025-09-25 10:00", ends_at: "2025-09-25 11:00" }
-    refute_includes slots, { starts_at: "2025-09-25 11:00", ends_at: "2025-09-25 11:30" }
+    refute_includes slots, { starts_at: thursday.change(hour: 10, min: 0), ends_at: thursday.change(hour: 11, min: 0) }
+    refute_includes slots, { starts_at: thursday.change(hour: 11, min: 0), ends_at: thursday.change(hour: 11, min: 30) }
   end
 end

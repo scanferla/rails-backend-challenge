@@ -7,7 +7,7 @@ class AvailabilitySyncTest < ActiveSupport::TestCase
 
   test "creates and is idempotent for provider 1 and returns counts" do
     result1 = AvailabilitySync.call(provider_id: 1)
-    
+
     assert result1.success?
     assert_equal({ created: 9, updated: 0, unchanged: 0, total: 9 }, result1.data[:counts])
 
@@ -79,5 +79,3 @@ class AvailabilitySyncTest < ActiveSupport::TestCase
     assert_equal({ created: 0, updated: 1, unchanged: 8, total: 9 }, result.data[:counts])
   end
 end
-
-
