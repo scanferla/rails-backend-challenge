@@ -23,8 +23,8 @@ class AppointmentTest < ActiveSupport::TestCase
   test "ends_at must be after starts_at" do
     appointment = build(
       :appointment,
-      starts_at: "2025-09-22 10:00",
-      ends_at: "2025-09-22 09:59",
+      starts_at: @next_monday.change(hour: 10, min: 0),
+      ends_at: @next_monday.change(hour: 9, min: 59),
       status: :scheduled
     )
 
@@ -44,8 +44,8 @@ class AppointmentTest < ActiveSupport::TestCase
       :appointment,
       client: create(:client),
       provider: create(:provider),
-      starts_at: "2025-09-22 10:00",
-      ends_at: "2025-09-22 10:30",
+      starts_at: @next_monday.change(hour: 10, min: 0),
+      ends_at: @next_monday.change(hour: 10, min: 30),
       status: :scheduled
     )
 

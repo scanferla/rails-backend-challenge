@@ -1,8 +1,12 @@
 require "test_helper"
 
 class TimeRangeParamsTest < ActiveSupport::TestCase
+  setup do
+    @monday = Time.zone.now.next_week(:monday)
+  end
+
   test "valid with proper ISO8601 from/to and to after from" do
-    params = TimeRangeParams.new(from: "2025-10-06T09:00:00Z", to: "2025-10-06T10:00:00Z")
+    params = TimeRangeParams.new(from: @monday.change(hour: 9, min: 0).iso8601, to: @monday.change(hour: 10, min: 0).iso8601)
 
     assert params.valid?
     assert_instance_of Time, params.from
@@ -18,7 +22,8 @@ class TimeRangeParamsTest < ActiveSupport::TestCase
   end
 
   test "invalid when to is not after from" do
-    params_equal = TimeRangeParams.new(from: "2025-10-06T10:00:00Z", to: "2025-10-06T10:00:00Z")
+    equal_time = @monday.change(hour: 10, min: 0).iso8601
+    params_equal = TimeRangeParams.new(from: equal_time, to: equal_time)
 
     assert_not params_equal.valid?
     assert params_equal.errors.of_kind?(:to, :greater_than)
