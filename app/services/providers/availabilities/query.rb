@@ -1,11 +1,5 @@
-# This service is responsible solely for efficiently fetching recurring availabilities for a provider
-# that could possibly overlap a given time range. It does not expand these into concrete date/time windows;
-# that responsibility is delegated to downstream business logic (e.g., FreeSlots).
-# This separation of concerns keeps the query logic efficient, testable, and focused, and allows
-# business rules (like clamping, splitting, and subtracting appointments) to evolve independently.
-# This approach is idiomatic Rails, supports maintainability, and directly maps to the challenge requirements:
-# - Query: fetch relevant availabilities
-# - FreeSlots: build actual free slot windows, subtracting appointments, and clamping to the requested range.
+# Selects recurring provider availabilities that could overlap a given time range.
+# Filters only relevant weekly windows; does not expand to concrete times or subtract appointments.
 
 module Providers
   module Availabilities

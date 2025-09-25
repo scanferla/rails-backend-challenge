@@ -1,9 +1,5 @@
-# This service is responsible for the business logic of building truly free slot windows for a provider
-# in a given time range. It takes recurring availabilities (from Query), expands them into concrete
-# date/time intervals, clamps them to the requested range, and subtracts out any overlapping appointments.
-# This separation of concerns keeps the query logic efficient and focused, while allowing all business
-# rules and edge cases to be handled in one place. This approach is idiomatic Rails, supports maintainability,
-# and directly maps to the challenge requirements: the API returns only truly free, bookable slots.
+# Expands recurring provider availabilities into concrete, bookable time slots within a given range.
+# Subtracts scheduled appointments and merges adjacent intervals.
 
 module Providers
   module Availabilities
