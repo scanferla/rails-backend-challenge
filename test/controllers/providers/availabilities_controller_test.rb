@@ -1,5 +1,4 @@
 require "test_helper"
-
 class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @provider = create(:provider, id: 1)
@@ -43,5 +42,31 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
 
     body = JSON.parse(@response.body)
     assert body["error"].present?
+  end
+
+  test "GET excludes slots that end exactly at from (no touch-only)" do
+    base_monday = Time.zone.now.next_week(:monday)
+    from_time = base_monday.change(hour: 10, min: 15) # ends_at of 09:45-10:15
+    to_time = base_monday.change(hour: 10, min: 30)
+
+    get provider_availabilities_path(@provider), params: { from: from_time.strftime("%Y-%m-%d %H:%M"), to: to_time.strftime("%Y-%m-%d %H:%M") }
+    assert_response :success
+
+    body = JSON.parse(@response.body)
+    assert_schema "providers_availabilities_index.json", body
+    assert_equal [], body["free_slots"]
+  end
+
+  test "GET excludes slots that start exactly at to (no touch-only)" do
+    base_monday = Time.zone.now.next_week(:monday)
+    from_time = base_monday.change(hour: 8,  min: 30)
+    to_time = base_monday.change(hour: 9,  min: 0) # starts_at of 09:00-09:30
+
+    get provider_availabilities_path(@provider), params: { from: from_time.strftime("%Y-%m-%d %H:%M"), to: to_time.strftime("%Y-%m-%d %H:%M") }
+    assert_response :success
+
+    body = JSON.parse(@response.body)
+    assert_schema "providers_availabilities_index.json", body
+    assert_equal [], body["free_slots"]
   end
 end

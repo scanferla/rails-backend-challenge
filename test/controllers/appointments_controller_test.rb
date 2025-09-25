@@ -53,6 +53,37 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     assert body["error"].present?
   end
 
+  test "POST /appointments allows touching edges (no overlap) within same availability" do
+    monday = Time.zone.now.next_week(:monday)
+    # Use a long slot 16:30-17:30 (from fixture)
+    create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 16, min: 30), ends_at: monday.change(hour: 17, min: 0))
+
+    # Touching start at 17:00 (no overlap), still inside 16:30-17:30 window
+    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: monday.change(hour: 17, min: 0), ends_at: monday.change(hour: 17, min: 15) } }
+    assert_response :created
+  end
+
+  test "POST /appointments allows booking exactly the full availability window" do
+    monday = Time.zone.now.next_week(:monday)
+    starts_at = monday.change(hour: 9, min: 0)
+    ends_at = monday.change(hour: 9, min: 30)
+
+    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
+    assert_response :created
+  end
+
+  test "POST /appointments rejects booking that exceeds availability by one minute" do
+    monday = Time.zone.now.next_week(:monday)
+    starts_at = monday.change(hour: 9, min: 0)
+    ends_at = monday.change(hour: 9, min: 31)
+
+    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
+    assert_response :bad_request
+
+    body = JSON.parse(@response.body)
+    assert body["error"].present?
+  end
+
   test "DELETE /appointments/:id soft-cancels and returns updated resource" do
     monday = Time.zone.now.next_week(:monday)
     appt = create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 9, min: 0), ends_at: monday.change(hour: 9, min: 30))
