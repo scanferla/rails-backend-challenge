@@ -8,9 +8,9 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
   test "GET /providers/:provider_id/availabilities returns free slots (happy path)" do
     base_monday = Time.zone.now.next_week(:monday)
     from_time = base_monday.change(hour: 9, min: 0)
-    to_time   = base_monday.change(hour: 12, min: 0)
+    to_time = base_monday.change(hour: 12, min: 0)
 
-    get provider_availabilities_path(@provider), params: { from: from_time.strftime("%Y-%m-%d %H:%M"), to: to_time.strftime("%Y-%m-%d %H:%M") }
+    get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
 
     body = JSON.parse(@response.body)
@@ -20,9 +20,11 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
     assert_equal to_time.iso8601, body["to"]
 
     slots = body["free_slots"]
+
     expect1 = { "starts_at" => base_monday.change(hour: 9,  min: 0).iso8601,  "ends_at" => base_monday.change(hour: 9,  min: 30).iso8601 }
     expect2 = { "starts_at" => base_monday.change(hour: 9,  min: 45).iso8601, "ends_at" => base_monday.change(hour: 10, min: 15).iso8601 }
     expect3 = { "starts_at" => base_monday.change(hour: 11, min: 30).iso8601, "ends_at" => base_monday.change(hour: 12, min: 0).iso8601 }
+
     assert_includes slots, expect1
     assert_includes slots, expect2
     assert_includes slots, expect3
@@ -49,7 +51,7 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
     from_time = base_monday.change(hour: 10, min: 15) # ends_at of 09:45-10:15
     to_time = base_monday.change(hour: 10, min: 30)
 
-    get provider_availabilities_path(@provider), params: { from: from_time.strftime("%Y-%m-%d %H:%M"), to: to_time.strftime("%Y-%m-%d %H:%M") }
+    get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
 
     body = JSON.parse(@response.body)
@@ -62,7 +64,7 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
     from_time = base_monday.change(hour: 8,  min: 30)
     to_time = base_monday.change(hour: 9,  min: 0) # starts_at of 09:00-09:30
 
-    get provider_availabilities_path(@provider), params: { from: from_time.strftime("%Y-%m-%d %H:%M"), to: to_time.strftime("%Y-%m-%d %H:%M") }
+    get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
 
     body = JSON.parse(@response.body)

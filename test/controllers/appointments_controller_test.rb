@@ -5,12 +5,12 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     @provider = create(:provider, id: 1)
     @client = create(:client)
     AvailabilitySync.call(provider_id: @provider.id)
+    @monday = Time.zone.now.next_week(:monday)
   end
 
   test "POST /appointments creates when inside free slot" do
-    monday = Time.zone.now.next_week(:monday)
-    starts_at = monday.change(hour: 9, min: 5)
-    ends_at= monday.change(hour: 9, min: 25)
+    starts_at = @monday.change(hour: 9, min: 5)
+    ends_at= @monday.change(hour: 9, min: 25)
 
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
     assert_response :created
@@ -41,12 +41,11 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "POST /appointments returns 422 for conflict" do
-    monday = Time.zone.now.next_week(:monday)
     # Existing appointment inside the 9:00-9:30 slot
-    create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 9, min: 10), ends_at: monday.change(hour: 9, min: 20))
+    create(:appointment, client: @client, provider: @provider, starts_at: @monday.change(hour: 9, min: 10), ends_at: @monday.change(hour: 9, min: 20))
 
     # Try to book overlapping window
-    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: monday.change(hour: 9, min: 0), ends_at: monday.change(hour: 9, min: 30) } }
+    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: @monday.change(hour: 9, min: 0), ends_at: @monday.change(hour: 9, min: 30) } }
     assert_response :unprocessable_content
 
     body = JSON.parse(@response.body)
@@ -54,28 +53,25 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "POST /appointments allows touching edges (no overlap) within same availability" do
-    monday = Time.zone.now.next_week(:monday)
     # Use a long slot 16:30-17:30 (from fixture)
-    create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 16, min: 30), ends_at: monday.change(hour: 17, min: 0))
+    create(:appointment, client: @client, provider: @provider, starts_at: @monday.change(hour: 16, min: 30), ends_at: @monday.change(hour: 17, min: 0))
 
     # Touching start at 17:00 (no overlap), still inside 16:30-17:30 window
-    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: monday.change(hour: 17, min: 0), ends_at: monday.change(hour: 17, min: 15) } }
+    post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: @monday.change(hour: 17, min: 0), ends_at: @monday.change(hour: 17, min: 15) } }
     assert_response :created
   end
 
   test "POST /appointments allows booking exactly the full availability window" do
-    monday = Time.zone.now.next_week(:monday)
-    starts_at = monday.change(hour: 9, min: 0)
-    ends_at = monday.change(hour: 9, min: 30)
+    starts_at = @monday.change(hour: 9, min: 0)
+    ends_at = @monday.change(hour: 9, min: 30)
 
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
     assert_response :created
   end
 
   test "POST /appointments rejects booking that exceeds availability by one minute (422)" do
-    monday = Time.zone.now.next_week(:monday)
-    starts_at = monday.change(hour: 9, min: 0)
-    ends_at = monday.change(hour: 9, min: 31)
+    starts_at = @monday.change(hour: 9, min: 0)
+    ends_at = @monday.change(hour: 9, min: 31)
 
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
     assert_response :unprocessable_content
@@ -85,8 +81,7 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "DELETE /appointments/:id soft-cancels and returns updated resource" do
-    monday = Time.zone.now.next_week(:monday)
-    appt = create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 9, min: 0), ends_at: monday.change(hour: 9, min: 30))
+    appt = create(:appointment, client: @client, provider: @provider, starts_at: @monday.change(hour: 9, min: 0), ends_at: @monday.change(hour: 9, min: 30))
 
     delete appointment_path(appt)
     assert_response :ok

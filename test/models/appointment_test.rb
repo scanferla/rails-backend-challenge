@@ -4,6 +4,7 @@ class AppointmentTest < ActiveSupport::TestCase
   setup do
     @next_monday = Time.zone.now.next_week(:monday)
   end
+
   test "belongs to client and provider" do
     provider = create(:provider, id: 1)
     AvailabilitySync.call(provider_id: provider.id)
