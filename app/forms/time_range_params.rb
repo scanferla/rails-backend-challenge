@@ -3,8 +3,8 @@ class TimeRangeParams
   include ActiveModel::Attributes
   include ActiveModel::Validations::Callbacks
 
-  # from is at least "now" (past is not returned for available slots, as they're not available anymore)
-  # to must be strictly after from
+  # `from`` is at least "now" (past is not returned for available slots, as they're not available anymore)
+  # `to` must be strictly after `from`
   attribute :from, :datetime
   attribute :to, :datetime
 
