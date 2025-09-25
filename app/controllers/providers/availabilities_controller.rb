@@ -16,7 +16,7 @@ module Providers
         @free_slots = result.data[:free_slots]
         render :index
       else
-        render_bad_request(result.error[:error])
+        render_unprocessable_entity(result.error[:error])
       end
     end
 
@@ -29,7 +29,7 @@ module Providers
     def validate_availability_request
       return if availability_params.valid?
 
-      render_bad_request(availability_params.errors.full_messages)
+      render_unprocessable_entity(availability_params.errors.full_messages)
     end
 
     def availability_params

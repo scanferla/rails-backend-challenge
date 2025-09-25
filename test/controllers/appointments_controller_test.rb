@@ -24,9 +24,9 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "scheduled", body["status"]
   end
 
-  test "POST /appointments returns 400 for invalid time range" do
+  test "POST /appointments returns 422 for invalid time range" do
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: nil, ends_at: nil } }
-    assert_response :bad_request
+    assert_response :unprocessable_content
 
     body = JSON.parse(@response.body)
     assert body["error"].present?
@@ -40,14 +40,14 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     assert_match /param is missing/, body["error"].to_s
   end
 
-  test "POST /appointments returns 400 for conflict" do
+  test "POST /appointments returns 422 for conflict" do
     monday = Time.zone.now.next_week(:monday)
     # Existing appointment inside the 9:00-9:30 slot
     create(:appointment, client: @client, provider: @provider, starts_at: monday.change(hour: 9, min: 10), ends_at: monday.change(hour: 9, min: 20))
 
     # Try to book overlapping window
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at: monday.change(hour: 9, min: 0), ends_at: monday.change(hour: 9, min: 30) } }
-    assert_response :bad_request
+    assert_response :unprocessable_content
 
     body = JSON.parse(@response.body)
     assert body["error"].present?
@@ -72,13 +72,13 @@ class AppointmentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
-  test "POST /appointments rejects booking that exceeds availability by one minute" do
+  test "POST /appointments rejects booking that exceeds availability by one minute (422)" do
     monday = Time.zone.now.next_week(:monday)
     starts_at = monday.change(hour: 9, min: 0)
     ends_at = monday.change(hour: 9, min: 31)
 
     post appointments_path, params: { appointment: { client_id: @client.id, provider_id: @provider.id, starts_at:, ends_at: } }
-    assert_response :bad_request
+    assert_response :unprocessable_content
 
     body = JSON.parse(@response.body)
     assert body["error"].present?

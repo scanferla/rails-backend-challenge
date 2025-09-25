@@ -28,9 +28,9 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
     assert_includes slots, expect3
   end
 
-  test "GET returns 400 for invalid params" do
+  test "GET returns 422 for invalid params" do
     get provider_availabilities_path(@provider), params: { from: nil, to: nil }
-    assert_response :bad_request
+    assert_response :unprocessable_content
 
     body = JSON.parse(@response.body)
     assert body["error"].present?

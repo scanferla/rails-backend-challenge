@@ -7,7 +7,7 @@ class AppointmentsController < ApplicationController
     if @appointment.save
       render :show, status: :created
     else
-      render_bad_request(@appointment.errors.full_messages)
+      render_unprocessable_entity(@appointment.errors.full_messages)
     end
   end
 

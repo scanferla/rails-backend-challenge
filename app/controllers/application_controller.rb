@@ -11,4 +11,8 @@ class ApplicationController < ActionController::API
   def render_bad_request(message)
     render json: { error: message }, status: :bad_request
   end
+
+  def render_unprocessable_entity(message)
+    render json: { error: message }, status: :unprocessable_content
+  end
 end
