@@ -3,12 +3,12 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @provider = create(:provider, id: 1)
     AvailabilitySync.call(provider_id: @provider.id)
+    @monday = Time.zone.now.next_week(:monday)
   end
 
   test "GET /providers/:provider_id/availabilities returns free slots (happy path)" do
-    base_monday = Time.zone.now.next_week(:monday)
-    from_time = base_monday.change(hour: 9, min: 0)
-    to_time = base_monday.change(hour: 12, min: 0)
+    from_time = @monday.change(hour: 9, min: 0)
+    to_time = @monday.change(hour: 12, min: 0)
 
     get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
@@ -21,9 +21,9 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
 
     slots = body["free_slots"]
 
-    expect1 = { "starts_at" => base_monday.change(hour: 9,  min: 0).iso8601,  "ends_at" => base_monday.change(hour: 9,  min: 30).iso8601 }
-    expect2 = { "starts_at" => base_monday.change(hour: 9,  min: 45).iso8601, "ends_at" => base_monday.change(hour: 10, min: 15).iso8601 }
-    expect3 = { "starts_at" => base_monday.change(hour: 11, min: 30).iso8601, "ends_at" => base_monday.change(hour: 12, min: 0).iso8601 }
+    expect1 = { "starts_at" => @monday.change(hour: 9,  min: 0).iso8601,  "ends_at" => @monday.change(hour: 9,  min: 30).iso8601 }
+    expect2 = { "starts_at" => @monday.change(hour: 9,  min: 45).iso8601, "ends_at" => @monday.change(hour: 10, min: 15).iso8601 }
+    expect3 = { "starts_at" => @monday.change(hour: 11, min: 30).iso8601, "ends_at" => @monday.change(hour: 12, min: 0).iso8601 }
 
     assert_includes slots, expect1
     assert_includes slots, expect2
@@ -47,9 +47,8 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "GET excludes slots that end exactly at from (no touch-only)" do
-    base_monday = Time.zone.now.next_week(:monday)
-    from_time = base_monday.change(hour: 10, min: 15) # ends_at of 09:45-10:15
-    to_time = base_monday.change(hour: 10, min: 30)
+    from_time = @monday.change(hour: 10, min: 15) # ends_at of 09:45-10:15
+    to_time = @monday.change(hour: 10, min: 30)
 
     get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
@@ -60,9 +59,8 @@ class Providers::AvailabilitiesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "GET excludes slots that start exactly at to (no touch-only)" do
-    base_monday = Time.zone.now.next_week(:monday)
-    from_time = base_monday.change(hour: 8,  min: 30)
-    to_time = base_monday.change(hour: 9,  min: 0) # starts_at of 09:00-09:30
+    from_time = @monday.change(hour: 8,  min: 30)
+    to_time = @monday.change(hour: 9,  min: 0) # starts_at of 09:00-09:30
 
     get provider_availabilities_path(@provider), params: { from: from_time.iso8601, to: to_time.iso8601 }
     assert_response :success
