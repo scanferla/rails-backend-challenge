@@ -11,6 +11,7 @@ class TimeRangeParamsTest < ActiveSupport::TestCase
 
   test "invalid when missing from or to" do
     params_missing = TimeRangeParams.new(from: nil, to: nil)
+
     assert_not params_missing.valid?
     assert params_missing.errors.of_kind?(:from, :blank)
     assert params_missing.errors.of_kind?(:to, :blank)
